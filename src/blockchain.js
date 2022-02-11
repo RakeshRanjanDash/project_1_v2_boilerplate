@@ -74,7 +74,13 @@ class Blockchain {
             self.chain.push(block);
             block.height = height + 1;
             self.height = self.chain.length - 1;
-            resolve(block);
+            const errorLog = this.validateChain();
+            if(errorLog.length == 0){
+                resolve(block);
+            }else{
+                reject("Block added is not valid");
+            }
+            
         });
     }
 
@@ -115,10 +121,9 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             
             let time = parseInt(message.split(':')[1]);
-            const mesg = message.split(':')[0];
             let currentTime = new Date().getTime().toString().slice(0, -3);
-            if( time + (5*60*1000) >= currentTime){
-                const isValid = bitcoinMessage.verify(mesg, address, signature);
+            if( time + (5*60) >= currentTime){
+                const isValid = bitcoinMessage.verify(message, address, signature);
                 if(isValid){
                     const block = new BlockClass.Block({owner: address, star : star});
                     const toAddBlock = await self._addBlock(block);
@@ -219,6 +224,7 @@ class Blockchain {
                 }
                 index++;
             });
+            resolve(errorLog);
         });
 
 
