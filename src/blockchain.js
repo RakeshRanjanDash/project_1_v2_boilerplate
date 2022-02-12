@@ -74,7 +74,8 @@ class Blockchain {
             self.chain.push(block);
             block.height = height + 1;
             self.height = self.chain.length - 1;
-            const errorLog = this.validateChain();
+            const errorLog = await 
+            this.validateChain();
             if(errorLog.length == 0){
                 resolve(block);
             }else{
@@ -147,7 +148,7 @@ class Blockchain {
         let self = this;
         return new Promise((resolve, reject) => {
            
-            const block = self.chain.filter(b => b.hash === hash)[0];
+            const block = self.chain.find(b => b.hash === hash);
             if(block){
                 resolve(block);
             } else{
@@ -210,20 +211,22 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             
             let promises = [];
-            let index = 0;
-            self.chain.forEach((block) => {
 
-                promises.push(block.validate());
-                if(block.height > 0 ){
+            for(const block in self.chain){
 
-                    const previousBlockHash = block.previousBlockHash;
-                    const previousHash = chain[index - 1].hash;
-                    if(previousBlockHash != previousHash){
-                        errorLog.push(`Error : Height : ${block.height} doesn't match with Previous`)
+                const isInValid = await block.validate();
+                if(!isInValid){
+                    errorLog.push(block);
+                    if(block.height > 0 ){
+
+                        const previousBlockHash = block.previousBlockHash;
+                        const previousHash = self.chain[index - 1].hash;
+                        if(previousBlockHash != previousHash){
+                            errorLog.push(`Error : Height : ${block.height} doesn't match with Previous`)
+                        }
                     }
                 }
-                index++;
-            });
+            }
             resolve(errorLog);
         });
 
